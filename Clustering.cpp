@@ -3,7 +3,10 @@
 
 #include <algorithm>
 #include <sstream>
+#include <cassert>
+#include <cmath>
 #include "Cluster.h"
+#include "Exceptions.h"
 
 namespace Clustering {
 
@@ -13,21 +16,34 @@ namespace Clustering {
     }
 
     // default constructor, makes an empty cluster
-    Cluster::Cluster()
+    // this isn't useful in the kmeans context, so I'm commenting it out, but that might make the compiler yell
+    // if so, will have it throw EmptyClusterEx.
+//    Cluster::Cluster()
+//    {
+//        __points = nullptr;
+//        __size = 0;
+//    }
+    Cluster::Cluster(unsigned int d) : centroid(d, *this)
     {
-        __points = nullptr;
+        __id = __idGenerator;
+        __idGenerator++;
+        __dimensionality = d;
         __size = 0;
+        __points = nullptr;
+
     }
 
     // copy constructor which uses another Cluster as an argument
-    Cluster::Cluster(const Cluster &c1)
+    Cluster::Cluster(const Cluster &c1) : Cluster(c1.__dimensionality)
     {
         __size = c1.getSize();
         __cpy(c1.__points);
+        Centroid(c1.__dimensionality, c1);
     }
 
     // assignment operator
-    Cluster& Cluster::operator=(const Cluster &c2){
+    Cluster& Cluster::operator=(const Cluster &c2)
+    {
         if(this != &c2)
         {
             __size = c2.__size;
@@ -42,7 +58,8 @@ namespace Clustering {
         __del();
     }
 
-    int Cluster::getSize() const{
+    unsigned int Cluster::getSize() const
+    {
         return __size;
     }
 
@@ -93,7 +110,8 @@ namespace Clustering {
             return;
         }
 
-        if (__points->next == nullptr) {
+        if (__points->next == nullptr)
+        {
             LNode *N = new LNode(p1, nullptr);
             if(N->point < __points->point)
             {
@@ -188,30 +206,10 @@ namespace Clustering {
         return p1;
     }
 
-    // checks if the cluster already contains a point exactly equal to p1
-    bool Cluster::contains(const Point &p1)
-    {
-        LNodePtr temp;
-
-        if(p1 == __points->point)
-        { return true; }
-
-        if(__points->next == nullptr)
-        { return false; }
-
-        temp = __points->next;
-
-        for(int i = 1; i < __size; i++)
-        {
-            if(temp->point == p1)
-            { return true; }
-            temp = temp->next;
-        }
-        return false;
-    }
-
     const Point &Cluster::operator[](unsigned int index) const
     {
+        if( __points == nullptr)
+            throw EmptyClusterEx();
         LNodePtr temp;
         temp = __points;
 
@@ -404,4 +402,128 @@ namespace Clustering {
         return is;
     }
 
+
+
+// pretty sure this is the same as old clustering's contains function..
+bool Cluster::__in(const Point &p) const
+{
+    LNodePtr temp;
+
+    if(p == __points->point)
+    { return true; }
+
+    if(__points->next == nullptr)
+    { return false; }
+
+    temp = __points->next;
+
+    for(int i = 1; i < __size; i++)
+    {
+        if(temp->point == p)
+        { return true; }
+        temp = temp->next;
+    }
+    return false;
 }
+
+    Cluster::Centroid::Centroid(unsigned int d, const Cluster &c) : __c(c), __p(d)
+    {
+        if (c.__size == 0)
+        {
+            __valid = false;
+            toInfinity();
+        }
+
+        __dimensions = d;
+        __valid = true;
+    }
+
+
+    // getters/setters
+    const Point Cluster::Centroid::get() const // doesn't check for validity
+    {
+        return __p;
+    }
+
+    void Cluster::Centroid::set(const Point &p) // sets to valid
+    {
+        __p = p;
+        __valid = true;
+    }
+
+    bool Cluster::Centroid::isValid() const
+    {
+        return __valid;
+    }
+
+    void Cluster::Centroid::setValid(bool valid)
+    {
+        __valid = valid;
+    }
+
+    // functions
+    void Cluster::Centroid::compute()
+    {
+        // first check if centroid is empty
+        if (__c.__points == nullptr)
+        {
+            assert(__c.__size == 0);
+            toInfinity();
+            return;
+        }
+
+        LNodePtr curr = __c.__points;
+        int sizecheck = 0;
+
+        while (curr != nullptr)
+        {
+            __p += curr->point / __c.getSize();
+            curr = curr->next;
+            sizecheck++;
+        }
+        assert(sizecheck == curr->point); // I don't think that point is right...
+    }
+
+
+    bool Cluster::Centroid::equal(const Point &p1) const
+    {
+        bool isEqual = false;
+        for (int i = 0; i < __dimensions; i++)
+        {
+            if (__p[i]==p1[i])
+                isEqual = true;
+        }
+        return isEqual;
+    }
+
+    void Cluster::Centroid::toInfinity() // and beyond.. har har
+    {
+        for (int i = 0; i < __dimensions; i++)
+        {
+            __p[i] = INFINITY;
+        }
+    }
+
+//    class Move {
+//        const Point &__p;
+//        Cluster &__from, &__to;
+
+        Cluster::Move::Move(const Point &p, Cluster &from, Cluster &to) : __p(p), __from(from), __to(to)
+        { }
+
+        void Cluster::Move::perform()
+        {
+            // first check if there's anything to move in either from or to
+            if (__from.__size == 0)
+                __from.centroid.toInfinity();
+            if (__to.__size == 0)
+                __to.centroid.toInfinity();
+
+            // use add on the remove, since we want the thing completely moved source -> destination
+            if (__from.contains(__p))
+                __to.add(__from.remove(__p));
+
+
+        }
+
+};

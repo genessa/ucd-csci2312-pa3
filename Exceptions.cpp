@@ -60,7 +60,7 @@ namespace Clustering {
     std::ostream &operator<<(std::ostream &os, const DimensionalityMismatchEx &ex)
     {
         // possibly copypasta from OutOfBoundsEx's
-        os << ex.__name << " : " << ex.current << ex.rhs << endl;
+        os << ex.__name << " : " << ex.__current << ex.__rhs << endl;
         return os;
     }
 
@@ -69,7 +69,7 @@ namespace Clustering {
 //    class ZeroClustersEx {
 //        std::string __name;
 
-    ZeroClustersEx()
+    ZeroClustersEx::ZeroClustersEx()
     {
         // nothing to initialise but name. whee.
         __name = "Zero clusters exception";
@@ -81,6 +81,7 @@ namespace Clustering {
     {
         // Just name to send out here.
         os << ex.__name << endl;
+        return os;
     }
 
 
@@ -143,7 +144,7 @@ namespace Clustering {
 };
 
 
-#endif //CLUSTERING_EXCEPTIONS_H
+
 //
 // Created by Genessa Moodie on 3/17/16.
 //
