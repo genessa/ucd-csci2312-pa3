@@ -51,20 +51,35 @@ Point::Point(const Point &p1)
 }
 
 // Overloaded assignment operator
-Point &Point::operator=(const Point &p1)
-    {
-    // recycle copy constructor's code
-    // but I think it will need its own __id rather than a copy
-    __id = __idGen;
-    ++__idGen;
-    __values = p1.__values;
-    return *this;
+//Point &Point::operator=(const Point &p1)
+//    {
+//    // recycle copy constructor's code
+//    // but I think it will need its own __id rather than a copy
+//    __id = __idGen;
+//    ++__idGen;
+//    __values = p1.__values;
+//    return *this;
+//    }
+
+    Point &Point::operator=(const Point &rhs) {
+        if (this == &rhs) {
+            return *this;
+        } else {
+            delete[] __values;
+
+            if (__dim != rhs.__dim) throw DimensionalityMismatchEx(__dim, rhs.__dim);
+
+            __values = new double[__dim];
+            for (int i = 0; i < __dim; i++)
+                __values[i] = rhs.__values[i];
+        }
+        return *this;
     }
 
 // Destructor
 Point::~Point()
     {
-    delete[]__values;
+//    delete []__values;
     }
 
 // ID accessor function

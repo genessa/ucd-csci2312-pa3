@@ -15,6 +15,7 @@ namespace Clustering {
         next = lnp;
     }
 
+    unsigned int Cluster::__idGenerator = 0;
     // default constructor, makes an empty cluster
     // this isn't useful in the kmeans context, so I'm commenting it out, but that might make the compiler yell
     // if so, will have it throw EmptyClusterEx.
@@ -63,6 +64,13 @@ namespace Clustering {
         return __size;
     }
 
+    unsigned int Cluster::getDimensionality() const { return __dimensionality; }
+    unsigned int Cluster::getId() const { return __id; }
+
+
+    bool Cluster::contains(const Point &p) const
+    { return __in(p); }
+
     // optional delete-a-point function
     void Cluster::__del()
     {
@@ -99,6 +107,20 @@ namespace Clustering {
         }
     }
 
+    void Cluster::pickCentroids(unsigned int k, Point **pointArray)
+    {
+        if(k <= __size)
+        for (int i = 0; i < k; i++)
+        {
+            (*pointArray[i])=(*this)[i];
+        }
+
+        if(k > __size)
+            for (int j = 0; j < __size; ++j)
+            {
+                pointArray[j]->setValue(k, INFINITY);
+            }
+    }
 
     void Cluster::add(const Point &p1)
     {

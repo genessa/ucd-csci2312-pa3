@@ -99,7 +99,5 @@ KMeans::KMeans(unsigned int dim, unsigned int k, std::string filename, unsigned 
                 }
                 __numIter++;
             }
-
-             //something about move.perform() goes in here
         }
 }
