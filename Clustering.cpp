@@ -16,6 +16,7 @@ namespace Clustering {
     }
 
     unsigned int Cluster::__idGenerator = 0;
+    const char Cluster::POINT_CLUSTER_ID_DELIM = ':';
     // default constructor, makes an empty cluster
     // this isn't useful in the kmeans context, so I'm commenting it out, but that might make the compiler yell
     // if so, will have it throw EmptyClusterEx.
@@ -55,8 +56,16 @@ namespace Clustering {
     }
 
     // dtor
-    Cluster::~Cluster(){
-        __del();
+    Cluster::~Cluster()
+    {
+        LNodePtr current;
+        while (__points != nullptr)
+        {
+            current = __points;
+            __points = current -> next;
+
+            delete current;
+        }
     }
 
     unsigned int Cluster::getSize() const
@@ -367,9 +376,10 @@ namespace Clustering {
     std::ostream &operator<<(std::ostream &os, const Cluster & c1)
     {
         LNodePtr temp = c1.__points;
+        os << c1.__id << c1.POINT_CLUSTER_ID_DELIM;
         for(int i = 0; i < c1.__size; i++)
         {
-            os << temp->point << std::endl;
+            os  <<  temp->point << std::endl;
             temp = temp->next;
         }
         return os;

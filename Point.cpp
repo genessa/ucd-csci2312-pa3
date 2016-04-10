@@ -22,23 +22,33 @@ unsigned int Point::__idGen = 0;
 // Problem: this leaves values not initialised..
 Point::Point(unsigned int dim)
     {
-        if(dim ==0)
+        if(dim == 0)
             throw ZeroDimensionsEx();
-    __dim = dim;
-    __id = __idGen;
-    __idGen++;
-    __values = new double(__dim);
-}
+
+        __dim = dim;
+        __id = __idGen;
+        __idGen++;
+        __values = new double[__dim];
+        for (int i = 0; i < dim; ++i)
+        {
+            __values[i] = 0;
+        }
+
+
+    }
 
 // Constructor which takes an int argument of the new Point's dimensions and a
 //    pointer to dynamically allocate a double array of the Point's.. points.
 Point::Point(unsigned int dim, double *values)
     {
     __dim = dim;
-    __values = values;
-    __values = new double(__dim);
+    __values = new double[__dim];
     __id = __idGen;
     __idGen++;
+        for (int i = 0; i < dim; ++i)
+        {
+            __values[i] = values[i];
+        }
 }
 
 // Copy constructor
@@ -48,6 +58,11 @@ Point::Point(const Point &p1)
     // assign calling point's arrayptr to p1's
     __id = p1.__id;
     __values = p1.__values;
+        __dim = p1.__dim;
+        for (int i = 0; i < __dim; ++i)
+        {
+            __values[i] = p1.__values[i];
+        }
 }
 
 // Overloaded assignment operator
@@ -79,7 +94,7 @@ Point::Point(const Point &p1)
 // Destructor
 Point::~Point()
     {
-//    delete []__values;
+        // delete []__values;
     }
 
 // ID accessor function
@@ -91,16 +106,18 @@ unsigned int Point::getDims() const { return __dim; }
 // Dimension and (double) mutator function
 void Point::setValue(unsigned int dim, double d)
     {
-    __dim = dim;
-    for (int i = 0; i < dim; ++i) {
-        __values[i] = d;
-    }
+        if (dim >= __dim)
+        { throw OutOfBoundsEx(__dim, dim);}
+        __values[dim] = d;
     }
 
 // Accessor function which returns   a thing.
-double Point::getValue(unsigned int index) const
+double Point::getValue(unsigned int dim) const
     {
-    return __values[index];
+        if (__dim < dim) // will go out of bounds if called with greater dimension
+        { throw OutOfBoundsEx(__dim, dim); }
+
+    return __values[dim];
     }
 
 
@@ -144,14 +161,18 @@ const Point Point::operator/(double d) const // p3 = p2 / 2;
     return p1;
 }
 
-double &Point::operator[](unsigned int index)
+double &Point::operator[](unsigned int dim)
 {
-    return __values[index];
+    if (dim > __dim)
+    { throw  OutOfBoundsEx(__dim, dim);}
+    return __values[dim];
 }
 
-    const double &Point::operator[](unsigned int index) const // why are you wandering off into tab-land.
+    const double &Point::operator[](unsigned int dim) const // why are you wandering off into tab-land.
     {
-        return __values[index];
+//        if (dim > __dim)
+//        { throw  OutOfBoundsEx(__dim, dim);}
+        return __values[dim];
     }
 
     // Friends
@@ -202,6 +223,8 @@ Point &operator-=(Point &p1, const Point &p2)
 
     bool operator<(const Point &p1, const Point &p2)
     {
+        if (p1.__dim != p2.__dim)
+        { throw DimensionalityMismatchEx(p1.__dim, p2.__dim);}
         if (p1.__dim == p2.__dim)
         {
             for (int i = 1; i <= p1.__dim; i++)
@@ -215,6 +238,8 @@ Point &operator-=(Point &p1, const Point &p2)
 
     bool operator>(const Point &p1, const Point &p2)
     {
+        if (p1.__dim != p2.__dim)
+        { throw DimensionalityMismatchEx(p1.__dim, p2.__dim);}
         if (p1.__dim == p2.__dim)
         {
             for (int i = 1; i <= p1.__dim; i++)
@@ -228,6 +253,8 @@ Point &operator-=(Point &p1, const Point &p2)
 
     bool operator<=(const Point &p1, const Point &p2)
     {
+//        if (p1.__dim != p2.__dim)
+//        { throw DimensionalityMismatchEx(p1.__dim, p2.__dim);}
         if (p1.__dim == p2.__dim)
         {
             for (int i = 1; i <= p1.__dim; i++)
@@ -241,6 +268,8 @@ Point &operator-=(Point &p1, const Point &p2)
 
     bool operator>=(const Point &p1, const Point &p2)
     {
+//        if (p1.__dim != p2.__dim)
+//        { throw DimensionalityMismatchEx(p1.__dim, p2.__dim);}
         if (p1.__dim == p2.__dim)
         {
             for (int i = 1; i >= p1.__dim; i++)
@@ -256,7 +285,7 @@ Point &operator-=(Point &p1, const Point &p2)
     {
         for (int i=0; i < p1.__dim; i++)
         {
-            os << p1.__values[i] << p1.POINT_VALUE_DELIM;
+            os << p1.__values[i] << p1.POINT_VALUE_DELIM << std::endl;
         }
         return os;
     }
@@ -272,6 +301,9 @@ Point &operator-=(Point &p1, const Point &p2)
 
     const Point operator+(const Point &p1, const Point &p2) // will this need to create a temporary point to hold results & be returned??
     {
+        if(p1.__dim != p2.__dim)
+        { throw DimensionalityMismatchEx(p1.__dim, p2.__dim); }
+
         for (int i = 0; i < p1.getDims(); ++i)
         {
             p1.__values[i] = p1.__values[i] + p2.__values[i];
@@ -281,6 +313,9 @@ Point &operator-=(Point &p1, const Point &p2)
 
     const Point operator-(const Point &p1, const Point &p2)
     {
+        if (p1.__dim != p2.__dim)
+        { throw DimensionalityMismatchEx(p1.__dim, p2.__dim);}
+
         for (int i = 0; i < p1.getDims(); ++i)
         {
             p1.__values[i] = p1.__values[i] - p2.__values[i];
